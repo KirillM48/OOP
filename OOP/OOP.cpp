@@ -1,89 +1,205 @@
 ﻿#include <iostream>
 using namespace std;
-class Person {
+const double pi = 3.1415926;
+//Задание 1
+class Figura {
 protected:
-    string name;
-    int age, height;
-    string gender;
+    double s;
 public:
-
-    Person(string n, int a, int h, string g) : name(n), age(a), height(h), gender(g) {}
-
-    void setName(string n) { name = n; }
-    void setAge(int n) { age = n; }
-    void setHeight(int n) { height = n; }
-    void setGender(char n) {
-        cout << "Enter 'f' (female) or 'm' (male): ";
-        do {
-            switch (n)
-            {
-            case'f':gender = "female";
-                break;
-            case'm':gender = "male";
-                break;
-
-            default: cout << "Invalid input" << endl;
-                break;
-            }
-        } while (n == 'f' or n == 'm');
-    }
+    Figura() {}
+    virtual void area() = 0;
+    virtual ~Figura();
 };
-class Student : public Person {
+class Parallelogram : public Figura {
+protected:
+    int length;
+    int height;
+public:
+    Parallelogram(int a) :length(a) { height = 0; }
+    Parallelogram(int a, int b) : length(a), height(a) {}
+    void area() { s = length * height; }
+};
+class Circle :public Figura {
 private:
-    int yearStudy;
+    int rad;
 public:
-    static int count;
-    Student(string n, int a, int h, string g, int y) :yearStudy(y), Person(n, a, h, g) { ++count; }
-    ~Student() { --count; }
-    void setYear(int n) { yearStudy = n; }
-    void getStudent() const
-    {
-        cout << "Name: " << name << endl;
-        cout << "Age: " << age << endl;
-        cout << "Height: " << height << endl;
-        cout << "Gender: " << gender << endl;
-        cout << "Year of study: " << yearStudy << endl;
+    Circle(int a) : rad(a) {}
+    void area() { s = pi * rad * rad; }
+};
+class Rectangle :public Parallelogram {
+private:
+    int width;
+public:
+    Rectangle(int a, int b) :width(a), Parallelogram(b) {}
+    void area() { s = length * width; }
+};
+class Square :public Parallelogram {
+public:
+    Square(int a) :Parallelogram(a) {}
+    void area() { s = length * length; }
+};
+class Rhombus :public Parallelogram {
+public:
+    Rhombus(int a, int b) : Parallelogram(a, b) {}
+    void area() { s = length * height; }
+};
+//Задание 2
+class Car {
+protected:
+    string company;
+    string model;
+public:
+    Car() {}
+    Car(string a, string b) :company(a), model(b) { cout << "Model: " << model << endl << "Company: " << company << endl; }
+};
+class PassengerCar :public Car {
+public:
+    PassengerCar() {}
+    PassengerCar(string a, string b) : Car(a, b) { cout << "Model: " << model << endl << "Company: " << company << endl; }
+};
+class Bus :public Car {
+public:
+    Bus(string a, string b) : Car(a, b) { cout << "Model: " << model << endl << "Company: " << company << endl; }
+};
+class Minivan :public PassengerCar, Bus {
+public:
+    Minivan(string a, string b) : Bus(a, b) { cout << "Model: " << Bus::model << endl << "Company: " << Bus::company << endl; }
+};
+//Задание 3
+class Fraction {
+private:
+    int ntr, dtr;
+public:
+    Fraction(int a, int b) {
+        try {
+            if (b == 0) throw std::runtime_error("Invalid fraction! Determinator = 0");
+        }
+        catch (std::runtime_error& e)
+        {
+            cout << e.what() << endl;;
+        }
+        ntr = a;
+        dtr = b;
     }
+    ~Fraction() { }
+    friend Fraction operator+ (const Fraction& f1, const Fraction& f2);
+    friend Fraction operator- (const Fraction& f1, const Fraction& f2);
+    friend Fraction operator* (const Fraction& f1, const Fraction& f2);
+    friend Fraction operator/ (const Fraction& f1, const Fraction& f2);
+    Fraction operator- () const { return Fraction(-ntr, -dtr); }
+    friend bool operator== (const Fraction& f1, const Fraction& f2);
+    friend bool operator!= (const Fraction& f1, const Fraction& f2);
+    friend bool operator< (const Fraction& f1, const Fraction& f2);
+    friend bool operator> (const Fraction& f1, const Fraction& f2);
+    friend bool operator<= (const Fraction& f1, const Fraction& f2);
+    friend bool operator>= (const Fraction& f1, const Fraction& f2);
+    void get() { cout << ntr << "/" << dtr << endl; }
 
 };
-int Student::count = 0;
-class Fruit {
-protected:
-    string name;
-    string color;
+Fraction operator+ (const Fraction& f1, const Fraction& f2) {
+    if (f1.dtr == f2.dtr)
+        return Fraction(f1.ntr + f2.ntr, f1.dtr);
+    else return Fraction(f1.ntr * f2.dtr + f2.ntr * f1.dtr, f1.dtr * f2.dtr);
+}
+Fraction operator- (const Fraction& f1, const Fraction& f2) {
+    if (f1.dtr == f2.dtr)
+        return Fraction(f1.ntr + f2.ntr, f1.dtr);
+    else return Fraction(f1.ntr * f2.dtr - f2.ntr * f1.dtr, f1.dtr * f2.dtr);
+}
+Fraction operator* (const Fraction& f1, const Fraction& f2) {
+    return Fraction(f1.ntr * f2.ntr, f1.dtr * f2.dtr);
+}
+Fraction operator/ (const Fraction& f1, const Fraction& f2) {
+    return Fraction(f1.ntr * f2.dtr, f1.dtr * f2.ntr);
+}
+bool operator== (const Fraction& f1, const Fraction& f2) {
+    return(f1.ntr == f2.ntr && f1.dtr == f2.dtr);
+}
+bool operator!= (const Fraction& f1, const Fraction& f2) {
+    return !(f1 == f2);
+}
+bool operator< (const Fraction& f1, const Fraction& f2) {
+    if (f1.dtr == f2.dtr) return f1.ntr < f2.ntr;
+    else return f1.ntr * f2.dtr < f2.ntr* f1.dtr;
+}
+bool operator<= (const Fraction& f1, const Fraction& f2) {
+    if (f1.dtr == f2.dtr) return f1.ntr <= f2.ntr;
+    else return f1.ntr * f2.dtr <= f2.ntr * f1.dtr;
+}
+bool operator> (const Fraction& f1, const Fraction& f2) {
+    return !(f1 < f2);
+}
+bool operator>= (const Fraction& f1, const Fraction& f2) {
+    return !(f1 <= f2);
+}
+// Задание 4
+enum suits { diamonds, clubs, hearts, peaks };
+enum values { one, two, three, four, five, six, seven, eight, nine, ten, jack, queen, king, ace };
+class Card {
+private:
+    suits suit;
+    values val;
+    bool position;
 public:
-    Fruit() {}
-    Fruit(string n, string c) :name(n), color(c) {}
-    ~Fruit() {}
-    string getName() { return name; }
-    string getColor() { return color; }
-};
-class Apple :public Fruit {
-public:
-    Apple() { name = "apple"; color = "red"; }
-    Apple(string c) : Fruit("apple", c) { }
-    ~Apple() {}
-};
-class Banana :public Fruit {
-public:
-    Banana() { name = "banana"; color = "yellow"; }
-    ~Banana() {}
-};
-class GrannySmith :public Apple {
-public:
-    GrannySmith() { name = "Granny smith apple"; color = "green"; }
-    ~GrannySmith() {}
+    Card() {}
+    ~Card() {}
+    void Flip() { position = !position; }
+    int GetValue() {
+        switch (val)
+        {
+        case one: return 1;
+            break;
+        case two: return 2;
+            break;
+        case three: return 3;
+            break;
+        case four: return 4;
+            break;
+        case five: return 5;
+            break;
+        case six: return 6;
+            break;
+        case seven: return 7;
+            break;
+        case eight: return 8;
+            break;
+        case nine: return 9;
+            break;
+        case ten: return 10;
+            break;
+        case jack: return 10;
+            break;
+        case queen: return 10;
+            break;
+        case king: return 10;
+            break;
+        case ace: return 1;
+            break;
+        }
+    }
+
+
 };
 int main()
 {
-    Student st1("Ivan", 20, 67, "male", 2019);
-    Student st2("Olya", 19, 60, "female", 2020);
-    st2.getStudent();
-    cout << Student::count << endl;
-    Apple a("red");
-    Banana b;
-    GrannySmith c;
-    cout << "My " << a.getName() << " is " << a.getColor() << endl;
-    cout << "My " << b.getName() << " is " << b.getColor() << endl;
-    cout << "My " << c.getName() << " is " << c.getColor() << endl;
+    Car a("Company 1", "model 1");
+    PassengerCar b("Company 2", "model 2");
+    Bus c("Company 3", "model 3");
+    Minivan d("Company 4", "model 4");
+    Fraction f1(3, 7);
+    Fraction f2(1, 9);
+    Fraction f3 = f1 + f2;
+    f3.get();
+    f3 = f2 - f1;
+    f3.get();
+    f3 = f2 * f1;
+    f3.get();
+    f3 = f1 / f2;
+    f3.get();
+    if (f1 != f2) cout << "fraction are not equale" << endl;
+    if (f1 == f2) cout << "fraction are equale" << endl;
+    if (f1 > f2) cout << "fraction f1 is greater fraction f2" << endl;
+    if (f1 < f2) cout << "fraction f1 is less fraction f2" << endl;
+    if (f1 >= f2) cout << "fraction f1 is greater or equale fraction f2" << endl;
+    if (f1 <= f2) cout << "fraction f1 is less or equale fraction f2" << endl;
 }
