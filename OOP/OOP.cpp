@@ -1,173 +1,166 @@
 ﻿#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cassert>
 using namespace std;
-const double pi = 3.1415926;
-//Задание 1
-class Figura {
-protected:
-    double s;
-public:
-    Figura() {}
-    virtual void area() = 0;
-    virtual ~Figura();
-};
-class Parallelogram : public Figura {
-protected:
-    int length;
-    int height;
-public:
-    Parallelogram(int a) :length(a) { height = 0; }
-    Parallelogram(int a, int b) : length(a), height(a) {}
-    void area() { s = length * height; }
-};
-class Circle :public Figura {
+class ArrayInt {
 private:
-    int rad;
+    int m_length;
+    int* m_data;
 public:
-    Circle(int a) : rad(a) {}
-    void area() { s = pi * rad * rad; }
-};
-class Rectangle :public Parallelogram {
-private:
-    int width;
-public:
-    Rectangle(int a, int b) :width(a), Parallelogram(b) {}
-    void area() { s = length * width; }
-};
-class Square :public Parallelogram {
-public:
-    Square(int a) :Parallelogram(a) {}
-    void area() { s = length * length; }
-};
-class Rhombus :public Parallelogram {
-public:
-    Rhombus(int a, int b) : Parallelogram(a, b) {}
-    void area() { s = length * height; }
+    ArrayInt() :m_length(0), m_data(nullptr) {}
+    ArrayInt(int l) : m_length(l) {
+        assert(l >= 0);
+        if (l > 0)
+        {
+            m_data = new int[l];
+            for (int i = 0; i < m_length; ++i) {
+                m_data[i] = 0;
+            }
+        }
+        else
+            m_data = nullptr;
+    }
+    ~ArrayInt() { delete[] m_data; }
+    void erase() {
+        delete[]m_data;
+        m_data = nullptr;
+        m_length = 0;
+    }
+    int getLength() { return m_length; }
+    int& operator[](int index) {
+        assert(index >= 0 && index < m_length);
+        return m_data[index];
+    }
+    int resize(int newLength) {
+        if (newLength == m_length) return 0;
+        if (newLength <= 0) { erase(); return 0; }
+        int* data = new int[newLength];
+        if (m_length > 0) {
+            int elsementsToCopy = (newLength > m_length) ? m_length : newLength;
+            for (int i = 0; i < elsementsToCopy; i++) { data[i] = m_data[i]; }
+        }
+        delete[] m_data;
+        m_data = data;
+        m_length = newLength;
+    }
+    void insertBefore(int val, int idx) {
+        assert(idx >= 0 && idx <= m_length);
+        int* data = new int[m_length + 1];
+        for (int i = 0; i < idx; ++i) {
+            data[i] = m_data[i];
+        }
+        data[idx] = val;
+        for (int i = idx; i < m_length; ++i) {
+            data[i + 1] = m_data[i];
+        }
+        delete[] data;
+        m_data = data;
+        ++m_length;
+    }
+    void push_back(int val) { insertBefore(val, m_length); }
+    void pop_back() {
+        if (m_length <= 0) return;
+        int* data = new int[m_length - 1];
+        for (int i = 0; i < m_length - 1; ++i) {
+            data[i] = m_data[i];
+        }
+        delete[] data;
+        m_data = data;
+        --m_length;
+    }
+    void pop_front() {
+        if (m_length <= 0) return;
+        int* data = new int[m_length - 1];
+        for (int i = 1; i < m_length; ++i) {
+            data[i] = m_data[i];
+        }
+        delete[] data;
+        m_data = data;
+        --m_length;
+    }
+    void sort(int first, int last)
+    {
+        int mid, count;
+        int f = first;
+        int l = last;
+        mid = m_data[(f + l) / 2];
+        do
+        {
+            while (m_data[f] < mid) ++f;
+            while (m_data[l] > mid) --l;
+            if (f <= l)
+            {
+                count = m_data[f];
+                m_data[f] = m_data[l];
+                m_data[l] = count;
+                ++f;
+                --l;
+            }
+        } while (f < l);
+        if (first < l) sort(first, l);
+        if (f < last) sort(f, last);
+    }
+    void print() {
+        for (int i = 0; i < m_length; ++i) { cout << m_data[i] << " "; }
+        cout << endl;
+    }
 };
 //Задание 2
-class Car {
-protected:
-    string company;
-    string model;
-public:
-    Car() {}
-    Car(string a, string b) :company(a), model(b) { cout << "Model: " << model << endl << "Company: " << company << endl; }
-};
-class PassengerCar :public Car {
-public:
-    PassengerCar() {}
-    PassengerCar(string a, string b) : Car(a, b) { cout << "Model: " << model << endl << "Company: " << company << endl; }
-};
-class Bus :public Car {
-public:
-    Bus(string a, string b) : Car(a, b) { cout << "Model: " << model << endl << "Company: " << company << endl; }
-};
-class Minivan :public PassengerCar, Bus {
-public:
-    Minivan(string a, string b) : Bus(a, b) { cout << "Model: " << Bus::model << endl << "Company: " << Bus::company << endl; }
-};
-//Задание 3
-class Fraction {
-private:
-    int ntr, dtr;
-public:
-    Fraction(int a, int b) {
-        try {
-            if (b == 0) throw std::runtime_error("Invalid fraction! Determinator = 0");
+int uniq(vector<int>& v) {
+    int count = 0;
+    for (int i = 0; i < v.size(); ++i) {
+        for (int j = i; j < v.size(); ++j) {
+            if ((i != j) && (v[i] != v[j]))
+            {
+                ++count;
+                break;
+            }
         }
-        catch (std::runtime_error& e)
-        {
-            cout << e.what() << endl;;
-        }
-        ntr = a;
-        dtr = b;
     }
-    ~Fraction() { }
-    friend Fraction operator+ (const Fraction& f1, const Fraction& f2);
-    friend Fraction operator- (const Fraction& f1, const Fraction& f2);
-    friend Fraction operator* (const Fraction& f1, const Fraction& f2);
-    friend Fraction operator/ (const Fraction& f1, const Fraction& f2);
-    Fraction operator- () const { return Fraction(-ntr, -dtr); }
-    friend bool operator== (const Fraction& f1, const Fraction& f2);
-    friend bool operator!= (const Fraction& f1, const Fraction& f2);
-    friend bool operator< (const Fraction& f1, const Fraction& f2);
-    friend bool operator> (const Fraction& f1, const Fraction& f2);
-    friend bool operator<= (const Fraction& f1, const Fraction& f2);
-    friend bool operator>= (const Fraction& f1, const Fraction& f2);
-    void get() { cout << ntr << "/" << dtr << endl; }
-
-};
-Fraction operator+ (const Fraction& f1, const Fraction& f2) {
-    if (f1.dtr == f2.dtr)
-        return Fraction(f1.ntr + f2.ntr, f1.dtr);
-    else return Fraction(f1.ntr * f2.dtr + f2.ntr * f1.dtr, f1.dtr * f2.dtr);
+    return count;
 }
-Fraction operator- (const Fraction& f1, const Fraction& f2) {
-    if (f1.dtr == f2.dtr)
-        return Fraction(f1.ntr + f2.ntr, f1.dtr);
-    else return Fraction(f1.ntr * f2.dtr - f2.ntr * f1.dtr, f1.dtr * f2.dtr);
-}
-Fraction operator* (const Fraction& f1, const Fraction& f2) {
-    return Fraction(f1.ntr * f2.ntr, f1.dtr * f2.dtr);
-}
-Fraction operator/ (const Fraction& f1, const Fraction& f2) {
-    return Fraction(f1.ntr * f2.dtr, f1.dtr * f2.ntr);
-}
-bool operator== (const Fraction& f1, const Fraction& f2) {
-    return(f1.ntr == f2.ntr && f1.dtr == f2.dtr);
-}
-bool operator!= (const Fraction& f1, const Fraction& f2) {
-    return !(f1 == f2);
-}
-bool operator< (const Fraction& f1, const Fraction& f2) {
-    if (f1.dtr == f2.dtr) return f1.ntr < f2.ntr;
-    else return f1.ntr * f2.dtr < f2.ntr* f1.dtr;
-}
-bool operator<= (const Fraction& f1, const Fraction& f2) {
-    if (f1.dtr == f2.dtr) return f1.ntr <= f2.ntr;
-    else return f1.ntr * f2.dtr <= f2.ntr * f1.dtr;
-}
-bool operator> (const Fraction& f1, const Fraction& f2) {
-    return !(f1 < f2);
-}
-bool operator>= (const Fraction& f1, const Fraction& f2) {
-    return !(f1 <= f2);
-}
-// Задание 4
-enum suits { diamonds, clubs, hearts, peaks };
-enum values { one = 1, two = 2, three = 3, four = 4, five = 5, six = 6, seven = 7, eight = 8, nine = 9, ten = 10, jack = 10, queen = 10, king = 10, ace = 1 };
+//BlackJack
+enum class Suit { diamonds, clubs, hearts, peaks };
+enum class Rank { one = 1, two, three, four, five, six, seven, eight, nine, ten, jack = 10, queen = 10, king = 10, ace = 11 };
 class Card {
 private:
-    suits suit;
-    values val;
-    bool position;
+    Suit m_suit;
+    Rank m_rank;
+    bool m_IsFaceUp;
 public:
     Card() {}
     ~Card() {}
-    void Flip() { position = !position; }
-    int GetValue() { return suit; }
-
-
+    void Flip() { m_IsFaceUp = !m_IsFaceUp; }
+    int GetValue() { return static_cast<int>(m_rank); }
+};
+class Hand {
+private:
+    vector<Card*> m_Cards;
+public:
+    Hand() {}
+    ~Hand() {}
+    void Add(Card* pCard) { m_Cards.push_back(pCard); }
+    void Clear() { m_Cards.clear(); }
+    int GetTotal() {
+        int total = 0;
+        for (int i = 0; i < m_Cards.size() - 1; ++i) {
+            total += m_Cards[i]->GetValue();
+        }
+        if (find(m_Cards.begin(), m_Cards.end(), Rank::ace) != m_Cards.end() && total >= 31)
+            total = total - 10;
+        return total;
+    }
 };
 int main()
 {
-    Car a("Company 1", "model 1");
-    PassengerCar b("Company 2", "model 2");
-    Bus c("Company 3", "model 3");
-    Minivan d("Company 4", "model 4");
-    Fraction f1(3, 7);
-    Fraction f2(1, 9);
-    Fraction f3 = f1 + f2;
-    f3.get();
-    f3 = f2 - f1;
-    f3.get();
-    f3 = f2 * f1;
-    f3.get();
-    f3 = f1 / f2;
-    f3.get();
-    if (f1 != f2) cout << "fraction are not equale" << endl;
-    if (f1 == f2) cout << "fraction are equale" << endl;
-    if (f1 > f2) cout << "fraction f1 is greater fraction f2" << endl;
-    if (f1 < f2) cout << "fraction f1 is less fraction f2" << endl;
-    if (f1 >= f2) cout << "fraction f1 is greater or equale fraction f2" << endl;
-    if (f1 <= f2) cout << "fraction f1 is less or equale fraction f2" << endl;
+    const int size = 10;
+    ArrayInt ar(size);
+    for (int i = 0; i < ar.getLength(); ++i) { ar[i] = rand() % 100; }
+    ar.print();
+    ar.sort(0, size - 1);
+    ar.print();
+    vector<int> v(size);
+    for (int i = 0; i < size - 1; ++i) { v[i] = rand() % 100; }
+    cout << uniq(v);
 }
