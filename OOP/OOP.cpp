@@ -1,5 +1,6 @@
 ﻿#include<iostream>
 #include<vector>
+using namespace std;
 enum class Suit { diamonds, clubs, hearts, peaks };
 enum class Rank { one = 1, two, three, four, five, six, seven, eight, nine, ten, jack = 10, queen = 10, king = 10, ace = 11 };
 class Card {
@@ -38,9 +39,9 @@ public:
     GenericPlayer(string n) : name(n), Hand() {}
     ~GenericPlayer() {}
     void isHitting() { cout << "Take card?" << endl; }
-    bool isBoosted() { (GetTotal() > 21) ? return 1 : return 0; }
+    bool isBoosted() { return (GetTotal() > 21) ?  true : false; }
+    void Bust() { if(isBoosted()) cout << name << " Перебор. " << GetTotal() << endl; }
 
 };
 int main{
-    return;
 }
