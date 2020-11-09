@@ -21,8 +21,8 @@ public:
     Hand() {}
     virtual ~Hand() {}
     void Add(Card* pCard) { m_Cards.push_back(pCard); }
-    void Clear() { m_Cards.clear(); }
-    int GetTotal() {
+    void Clear() { m_Cards.clear(); delete &m_Cards; }
+    int GetTotal() const {
         int total = 0;
         for (int i = 0; i < m_Cards.size() - 1; ++i) {
             total += m_Cards[i]->GetValue();
