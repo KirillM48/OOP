@@ -35,7 +35,7 @@ public:
     Card() {}
     ~Card() {}
     void Flip() { m_IsFaceUp = !m_IsFaceUp; }
-    int GetValue() { return static_cast<int>(m_rank); }
+    int GetValue() const { return static_cast<int>(m_rank); }
     friend ostream& operator<< (ostream& out, const Card& card) {}
 };
 class Hand {
