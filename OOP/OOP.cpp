@@ -4,44 +4,41 @@
 #include<algorithm>
 #include <ctime>
 using namespace std;
-enum Suit { diamonds, clubs, hearts, spades };
-enum Rank { one = 1, two, three, four, five, six, seven, eight, nine, ten, jack = 10, queen = 10, king = 10, ace = 11 };
 class Card {
+public:
+    enum Suit { diamonds, clubs, hearts, spades };
+    enum Rank { ace = 1, two, three, four, five, six, seven, eight, nine, ten, jack, queen, king };
+    Card(Rank r = ace, Suit s = diamonds) : m_suit(s), m_rank(r) { m_IsFaceUp = true; }
+    ~Card() {}
+    void Flip() { m_IsFaceUp = !m_IsFaceUp; }
+    int GetValue() const { return (m_IsFaceUp) ? (m_rank > 10) ? 10 : m_rank : 0; }
+    friend ostream& operator<< (ostream& out, const Card& card);
 private:
     Suit m_suit;
     Rank m_rank;
     bool m_IsFaceUp;
-public:
-    Card(Rank r, Suit s) : m_suit(s), m_rank(r) { m_IsFaceUp = false; }
-    ~Card() {}
-    void Flip() { m_IsFaceUp = !m_IsFaceUp; }
-    int GetValue() const { return static_cast<int>(m_rank); }
-    friend ostream& operator<< (ostream& out, const Card& card);
 };
 class Hand {
 protected:
     vector<Card*> m_Cards;
 public:
-    Hand() { m_Cards.reserve(7); }
+    Hand() { m_Cards.reserve(5); }
     virtual ~Hand() { Clear(); }
     inline void Add(Card* pCard) { m_Cards.push_back(pCard); }
     void Clear() { 
-        for (int i = 0; i < m_Cards.size(); ++i) delete m_Cards[i];
+        for (auto* c : m_Cards) { delete c; c = nullptr; }
         m_Cards.clear();
     }
     int GetTotal() const {
         if (m_Cards.empty()) { return 0; }
+        if (m_Cards.at(0)->GetValue() == 0) { return 0; }
         int total = 0;
-        for (int i = 0; i < m_Cards.size() - 1; ++i) {
-            total += m_Cards[i]->GetValue();
+        for (const auto* c : m_Cards) { total += c->GetValue(); }
+        bool containsAce = false;
+        for (const auto* c : m_Cards) {
+            if (c->GetValue() == 0) { containsAce = true; }
         }
-        vector<Card*>::const_iterator iter;
-        for (iter = m_Cards.begin(); iter != m_Cards.end(); ++iter) {
-            if ((*iter)->GetValue() == 11 && total >= 21)
-            {
-                total = total - 10;
-            }
-        }
+        if (containsAce && total <= 11) { total += 10; }
         return total;
     }
 };
@@ -51,17 +48,17 @@ protected:
 public:
     GenericPlayer(string n): name(n) {}
     virtual ~GenericPlayer() {}
-    virtual void isHitting() const = 0;
+    virtual bool IsHitting() const = 0;
     bool isBoosted() { return (GetTotal() > 21); }
-    void Bust() { if(isBoosted()) cout << name << " Перебор. " << GetTotal() << endl; }
+    void Bust() { if(isBoosted()) cout << name << " Busts! " << GetTotal() << endl; }
     friend ostream& operator<< (ostream& out, const GenericPlayer& player);
 };
 class Player : public GenericPlayer {
 public:
-    Player(string n): GenericPlayer(n) {}
-    virtual ~Player() {}
+    Player(string n = "Player"): GenericPlayer(n) {}
+    ~Player() {}
     bool IsHitting() const {
-        int ans;
+        char ans;
         cout << "Take card? (y/n): "; 
         cin >> ans;
         return (ans == 'y');
@@ -72,8 +69,8 @@ public:
 };
 class House : public GenericPlayer {
 public:
-    House(string n): GenericPlayer(n) {}
-    virtual ~House() {}
+    House(string n = "House"): GenericPlayer(n) {}
+    ~House() {}
     bool IsHitting() const { return (GetTotal() <= 16); }
     void FlipFirstCard() {
         if (!(m_Cards.empty())) { m_Cards[0]->Flip(); }
@@ -86,11 +83,10 @@ public:
     Deck() { m_Cards.reserve(52); Populate(); }
     ~Deck(){}
     void Populate(){
-        for (int s = 0; s <= 3; ++s)
-        {
-            for (int r = 1; r <= 11; ++r)
-            {
-                Add(new Card(static_cast<Rank>(r), static_cast <Suit> (s)));
+        Clear();
+        for (int s = Card::diamonds; s <= Card::spades; ++s) {
+            for (int r = Card::ace; r <= Card::king; ++r) {
+                Add(new Card(static_cast<Card::Rank>(r), static_cast<Card::Suit>(s)));
             }
         }
     }
@@ -100,7 +96,7 @@ public:
             aHand.Add(m_Cards.back());
             m_Cards.pop_back();
         }
-        else { cout << "Out of cards. Unable to deal. "; }
+        else { cout << "Out of cards. Unable to deal." << endl; }
     }
     void AdditionalCards(GenericPlayer& aPlayer){
         while (!(aPlayer.isBoosted()) && aPlayer.isBoosted())
@@ -136,20 +132,25 @@ public:
         m_house.FlipFirstCard();
         cout << endl << m_house;
         m_deck.AdditionalCards(m_house);
-        if (m_house.isBoosted()) { for (auto& a : players) { if (!a.isBoosted()) { a.Win(); } } }
+
+        if (m_house.isBoosted()) {
+            for (auto& a : players) { if (!a.isBoosted()) { a.Win(); } }
+        }
         else {
             for (auto& a : players) {
-                if (!a.isBoosted()) { a.Win(); }
-                else if (a.GetTotal() < m_house.GetTotal()) { a.Lose(); }
-                else { a.Push(); }
+                if (!a.isBoosted()) {
+                    if (a.GetTotal() > m_house.GetTotal()) a.Win();
+                    else if (a.GetTotal() < m_house.GetTotal()) a.Lose();
+                    else a.Push();
+                }
             }
         }
-        for (auto& a : players) { a.Clear(); }
+        for (auto& a : players) a.Clear();
         m_house.Clear();
     }
 };
 ostream& operator<< (ostream& out, const Card& card) {
-    const string RANKS[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9","10", "jack", "queen", "king", "ace" };
+    const string RANKS[] = { "0", "ace", "2", "3", "4", "5", "6", "7", "8", "9","10", "jack", "queen", "king" };
     const string SUITS[] = { "diamonds", "clubs", "hearts", "spades" };
     if (card.m_IsFaceUp) out << RANKS[card.m_rank] << " " << SUITS[card.m_suit];
     else out << "XX";
@@ -157,9 +158,12 @@ ostream& operator<< (ostream& out, const Card& card) {
 }
 
 ostream& operator<< (ostream& out, const GenericPlayer& player) {
-    out << player.name << endl;
-    for (int i = 0; i < player.m_Cards.size(); ++i) out << player.m_Cards[i] << " ";
-    out << endl << "Points: " << player.GetTotal() << endl;
+    out << player.name << '\t';
+    vector<Card*>::const_iterator pCard;
+    if (!player.m_Cards.empty()) {
+        for (pCard = player.m_Cards.begin(); pCard != player.m_Cards.end(); ++pCard) out << *(*pCard) << "\t";
+        if (player.GetTotal() != 0) out << "Points: " << player.GetTotal() << endl;
+    } else out << "empty";
     return out;
 }
 vector<string> getPlNames()
